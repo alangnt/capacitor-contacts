@@ -233,8 +233,10 @@ public class CapacitorContactsPlugin: CAPPlugin, CAPBridgedPlugin {
 
     private func mapAuthorizationStatus(_ status: CNAuthorizationStatus) -> String {
         switch status {
-        case .authorized, .limited:
+        case .authorized:
             return "granted"
+        case .limited:
+            return "limited"
         case .denied:
             return "denied"
         case .restricted:
@@ -247,32 +249,42 @@ public class CapacitorContactsPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     private func keysToFetch(for fields: Set<String>?) -> [CNKeyDescriptor] {
-        var keys: [CNKeyDescriptor] = [
-            CNContactIdentifierKey as CNKeyDescriptor,
-            CNContactGivenNameKey as CNKeyDescriptor,
-            CNContactFamilyNameKey as CNKeyDescriptor,
-            CNContactMiddleNameKey as CNKeyDescriptor,
-            CNContactNamePrefixKey as CNKeyDescriptor,
-            CNContactNameSuffixKey as CNKeyDescriptor,
-            CNContactOrganizationNameKey as CNKeyDescriptor,
-            CNContactJobTitleKey as CNKeyDescriptor,
-            CNContactEmailAddressesKey as CNKeyDescriptor,
-            CNContactPhoneNumbersKey as CNKeyDescriptor,
-            CNContactPostalAddressesKey as CNKeyDescriptor,
-            CNContactUrlAddressesKey as CNKeyDescriptor,
-            CNContactBirthdayKey as CNKeyDescriptor,
-            CNContactNoteKey as CNKeyDescriptor,
-            CNContactImageDataAvailableKey as CNKeyDescriptor,
-            CNContactImageDataKey as CNKeyDescriptor
-        ]
+        var keys: [CNKeyDescriptor] = [CNContactIdentifierKey as CNKeyDescriptor] 
 
-        if let fields, fields.contains("groupIds") {
-            // No additional keys required, but this preserves the behaviour if custom keys are needed later.
-        }
+        let fieldToKey: [String: CNKeyDescriptor] = [
+          "givenName": CNContactGivenNameKey as CNKeyDescriptor,                                                                                                                                                                        
+          "familyName": CNContactFamilyNameKey as CNKeyDescriptor,
+          "middleName": CNContactMiddleNameKey as CNKeyDescriptor,                                                                                                                                                                      
+          "namePrefix": CNContactNamePrefixKey as CNKeyDescriptor,
+          "nameSuffix": CNContactNameSuffixKey as CNKeyDescriptor,                                                                                                                                                                      
+          "organizationName": CNContactOrganizationNameKey as CNKeyDescriptor,
+          "jobTitle": CNContactJobTitleKey as CNKeyDescriptor,                                                                                                                                                                          
+          "emailAddresses": CNContactEmailAddressesKey as CNKeyDescriptor,
+          "phoneNumbers": CNContactPhoneNumbersKey as CNKeyDescriptor,                                                                                                                                                                  
+          "postalAddresses": CNContactPostalAddressesKey as CNKeyDescriptor,                                                                                                                                                            
+          "urlAddresses": CNContactUrlAddressesKey as CNKeyDescriptor,
+          "birthday": CNContactBirthdayKey as CNKeyDescriptor,                                                                                                                                                                          
+          "note": CNContactNoteKey as CNKeyDescriptor,                                                                                                                                                                                  
+          "imageDataAvailable": CNContactImageDataAvailableKey as CNKeyDescriptor,
+          "imageData": CNContactImageDataKey as CNKeyDescriptor                                                                                                                                                                         
+        ]   
 
-        if let fields, fields.contains("fullName") {
-            keys.append(CNContactFormatter.descriptorForRequiredKeys(for: .fullName))
-        }
+         if let fields = fields {                                                                                                                                                                                                          
+            for field in fields {
+                if let key = fieldToKey[field] {
+                    keys.append(key)
+                }
+            }
+            if fields.contains("fullName") {
+                keys.append(CNContactFormatter.descriptorForRequiredKeys(for: .fullName))
+            }                                                                                                                                                                                                                             
+        } else {
+            // fetch all except note (requires special Apple entitlement)                                                                                                                                                                 
+            for (field, key) in fieldToKey where field != "note" {
+                keys.append(key)                                                                                                                                                                                                          
+            }
+            keys.append(CNContactFormatter.descriptorForRequiredKeys(for: .fullName))                                                                                                                                                     
+        }           
 
         return keys
     }
