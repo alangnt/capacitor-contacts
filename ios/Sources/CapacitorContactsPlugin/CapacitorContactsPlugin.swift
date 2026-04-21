@@ -312,9 +312,11 @@ public class CapacitorContactsPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     private func serialize(contact: CNContact, fields: Set<String>?, membership: [String: [String]]) -> JSObject {
-        let includeAll = fields == nil
         func shouldInclude(_ field: String) -> Bool {
-            includeAll || fields!.contains(field)
+            guard let fields = fields else {
+                return field != "note"
+            }
+            return fields.contains(field)
         }
 
         var result: JSObject = [:]
